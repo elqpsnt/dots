@@ -1,0 +1,43 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║            💻  CLI TOOLS & UTILITIES                         ║
+# ║  Terminal binaries, runtime managers, and monitors           ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# A cat(1) clone with syntax highlighting and Git integration
+brew "bat"
+
+# Simple, fast and user-friendly alternative to 'find'
+brew "fd"
+
+# GitHub's official command line tool to manage PRs, issues, and repos
+brew "gh"
+
+# Development tool runtime version manager (replacement for asdf)
+brew "mise"
+
+# Terminal-based Mac analyzer, optimizer, and monitor
+brew "mole"
+
+# Vim-fork focused on extensibility and usability (your core editor)
+brew "neovim"
+
+# Useful CLI tool for toolkit operation on PDF documents (PDF TK)
+brew "pdftk-java"
+
+# PDF rendering library and command line utilities
+brew "poppler"
+
+# Line-oriented search tool that recursively searches directories (fast grep)
+brew "ripgrep"
+
+# Simplified, official, high-performance Rust client for tldr-pages
+brew "tlrc"
+
+# Parser generator tool for programming tools (improves Neovim syntax highlighting)
+brew "tree-sitter-cli"
+
+# Blazing-fast async terminal file manager written in Rust
+brew "yazi"
+
+# Smarter cd command that learns your habits (z extension)
+brew "zoxide"

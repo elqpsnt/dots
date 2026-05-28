@@ -1,0 +1,52 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                    ⚙️  OPTIONS SETUP                         ║
+# ║          Global Git configuration and user profile           ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# =============================================================================
+#  [ User Profile ]
+# =============================================================================
+[user]
+	name = elqpsnt
+	email = elqpsnt@icloud.com
+	editor = nvim
+
+[github]
+	user = elqpsnt
+
+# =============================================================================
+#  [ UI & Display Settings ]
+# =============================================================================
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+	ui = auto
+	page = true
+
+# =============================================================================
+#  [ Core Behavior & Tools ]
+# =============================================================================
+[svn]
+	rmdir = true
+
+[init]
+	defaultBranch = main           # Sets main as default branch for git init
+
+[pager]
+	branch = false                 # Don't use pager for git-branch
+
+# =============================================================================
+#  [ Network & Performance ]
+# =============================================================================
+[http]
+	postBuffer = 524288000         # Increase post byte size to handle larger pushes
+
+[fetch]
+	prune = true                   # Automatically prune stale remote-tracking branches
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential

@@ -1,0 +1,74 @@
+# ============================================================
+# GLOBAL SETTINGS
+# ============================================================
+config-version = 2
+start-at-login = true
+
+# This allows you to manually manage the window tree orientation
+enable-normalization-flatten-containers = false
+
+# ============================================================
+# VISUALS (Gaps & Layout)
+# ============================================================
+[gaps]
+inner.horizontal = 20
+inner.vertical   = 20
+outer.left       = 25
+outer.bottom     = 15
+outer.top        = 15
+outer.right      = 25
+
+# ============================================================
+# NAVIGATION (Vim-style Focus)
+# ============================================================
+[mode.main.binding]
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+
+# ============================================================
+# MOVEMENT (Vim-style Window Shifting within workspace)
+# ============================================================
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+# ============================================================
+# WORKSPACES (Jump & Move window to workspace)
+# ============================================================
+# Switch to workspace
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+
+# Move active window to workspace (The part I missed!)
+alt-shift-1 = 'move-node-to-workspace 1'
+alt-shift-2 = 'move-node-to-workspace 2'
+alt-shift-3 = 'move-node-to-workspace 3'
+alt-shift-4 = 'move-node-to-workspace 4'
+alt-shift-5 = 'move-node-to-workspace 5'
+
+# ============================================================
+# RESIZE MODE (HJKL to resize, Esc to quit)
+# ============================================================
+alt-r = 'mode resize'
+
+[mode.resize.binding]
+h = 'resize width -50'
+j = 'resize height +50'
+k = 'resize height -50'
+l = 'resize width +50'
+enter = 'mode main'
+esc   = 'mode main'
+
+# ============================================================
+# LAYOUT & UTILS
+# ============================================================
+alt-f = 'layout floating tiling'             # Toggle Float
+alt-v = 'layout vertical horizontal'         # Toggle split orientation
+alt-e = 'layout tiles accordion'            # Toggle tiles/accordion
+alt-shift-r = 'reload-config'                # Hot reload

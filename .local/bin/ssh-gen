@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                     🔑 MODULAR SSH GENERATOR                  ║
+# ║   Isolates SSH identity keys into unique service folders     ║
+# ║   Requirements: openssh                                      ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# 1. Prompt user cleanly for the target platform/service name
+printf "🔑 Enter the service name (e.g., github, gitlab, bitbucket): "
+read -r SERVICE_INPUT
+
+# Sanitize input: convert to lowercase and strip unwanted characters
+SERVICE=$(echo "$SERVICE_INPUT" | tr '[:upper:]' '[:lower:]' | tr -dc 'a-z0-9_-')
+
+if [[ -z "$SERVICE" ]]; then
+	echo "❌ Error: Invalid service name provided." >&2
+	exit 1
+fi
+
+# Define path configurations natively under the XDG/Home footprint
+SSH_DIR="$HOME/.ssh"
+SERVICE_DIR="$SSH_DIR/services/$SERVICE"
+KEY_PATH="$SERVICE_DIR/id_ed25519"
+CONFIG_FILE="$SSH_DIR/config"
+
+# 2. Prevent accidental overwrites of existing identity setups
+if [[ -f "$KEY_PATH" ]]; then
+	echo "⚠️  Identity key already exists at: $KEY_PATH"
+	printf "Do you want to overwrite it? (y/N): "
+	read -r CONFIRM
+	if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+		echo "Operation aborted safely."
+		exit 0
+	fi
+fi
+
+# Create target isolated layout structure safely
+mkdir -p "$SERVICE_DIR"
+chmod 700 "$SSH_DIR" "$SERVICE_DIR"
+
+# 3. Generate high-security modern Ed25519 keys cleanly
+echo "🚀 Generating Ed25519 key pair for '$SERVICE'..."
+ssh-keygen -t ed25519 -N "" -f "$KEY_PATH" -C "service-$SERVICE" < /dev/null
+
+# Ensure private/public key file system permissions are strictly tight
+chmod 600 "$KEY_PATH"
+chmod 644 "$KEY_PATH.pub"
+
+# 4. Inject modular structural definition blocks directly into the local SSH configuration matrix
+echo "📝 Appending routing rules to $CONFIG_FILE..."
+
+# Ensure the config file exists before writing to it
+touch "$CONFIG_FILE"
+chmod 600 "$CONFIG_FILE"
+
+# Dynamically set standard Host routing addresses depending on service names
+HOST_DOMAIN="$SERVICE.com"
+[[ "$SERVICE" == "github" ]] && HOST_DOMAIN="github.com"
+[[ "$SERVICE" == "gitlab" ]] && HOST_DOMAIN="gitlab.com"
+[[ "$SERVICE" == "bitbucket" ]] && HOST_DOMAIN="bitbucket.org"
+
+# Check if the host configuration profile block was already written previously
+if grep -q "IdentityFile $KEY_PATH" "$CONFIG_FILE"; then
+	echo "ℹ️  Routing block configuration already tracked inside SSH configuration matrix."
+else
+	cat <<-EOF >> "$CONFIG_FILE"
+
+	# ────────────────────────────────────────────────────────────────
+	# 🟢 MODULE: ${SERVICE}
+	# ────────────────────────────────────────────────────────────────
+	Host ${SERVICE} ${HOST_DOMAIN}
+	    HostName ${HOST_DOMAIN}
+	    User git
+	    IdentityFile ${KEY_PATH}
+	    IdentitiesOnly yes
+	EOF
+	echo "✅ Configuration block appended seamlessly!"
+fi
+
+# Convert service name to uppercase using a method compatible with macOS legacy Bash
+SERVICE_UPPER=$(echo "$SERVICE" | tr '[:lower:]' '[:upper:]')
+
+# 5. Output public key payload block straight to console for copy-pasting
+printf "\n"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "  📋 YOUR PUBLIC KEY FOR ${SERVICE_UPPER}:"
+echo "╚══════════════════════════════════════════════════════════════╝"
+cat "$KEY_PATH.pub"
+printf "\n"
+echo "✨ Setup complete. Keys are securely isolated at $SERVICE_DIR"
+printf "\n"

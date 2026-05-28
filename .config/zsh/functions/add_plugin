@@ -1,0 +1,19 @@
+function add_plugin() {
+    local repo_path="$1"
+    local plugin_name="${1##*/}" # Faster than cut: gets everything after the last slash
+    local plugin_dir="$ZDOTDIR/plugins/$plugin_name"
+
+    # Clone if the directory is missing
+    if [[ ! -d "$plugin_dir" ]]; then
+        echo "Installing $repo_path..."
+        mkdir -p "$plugin_dir"
+        git clone --depth 1 -q "https://github.com/$repo_path.git" "$plugin_dir"
+    fi
+
+    # Source the plugin using full path for reliability
+    if [[ -f "$plugin_dir/$plugin_name.plugin.zsh" ]]; then
+        source "$plugin_dir/$plugin_name.plugin.zsh"
+    elif [[ -f "$plugin_dir/$plugin_name.zsh" ]]; then
+        source "$plugin_dir/$plugin_name.zsh"
+    fi
+}

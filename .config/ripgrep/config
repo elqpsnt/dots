@@ -1,0 +1,62 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                  🔍 RIPGREP RUNTIME ENGINE                   ║
+# ║     Global CLI telemetry search optimizations and project     ║
+# ║                  buffer indexing exemptions                  ║
+# ╚══════════════════════════════════════════════════════════════╝
+# Reference Specification: https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#configuration-file
+
+# =============================================================================
+#  [ Core Engine Traversal Behavior ]
+# =============================================================================
+# Follow symbolic links found in the workspace directory tree during scan loops
+--follow
+
+# Include dotfiles and hidden operating system structures within search sweeps
+--hidden
+
+# Intelligent text scanning logic wrapper:
+# - Pure lowercase targets trigger case-insensitive string evaluation passes
+# - Mixed-case conditions automatically lock down strict literal case matching
+# Override layout natively at runtime by appending flags like (-s|--case-sensitive)
+--smart-case
+
+# =============================================================================
+#  [ Target Omissions & Structural Workspace Ignores ]
+# =============================================================================
+# Execution Reference Hook for Go testing modules: $ rg --glob='!*_test.go'
+
+# Prevent active lookups inside hidden native version control index spaces
+# NOTE: Highly redundant under standard execution passes as ripgrep implicitly skips .git/
+--glob=!.git/
+
+# Disregard heavy downstream node ecosystem modules to maximize performance metrics
+--glob=!node_modules/
+
+# Exclude vendored package payloads inside native Go environments
+--glob=!vendor/
+
+# --- Vim Workspace State Artifacts ---
+--glob=!cscope.out
+--glob=!cscope.files
+--glob=!tags
+--glob=!Session.vim
+--glob=!.syntastic_javac_config
+--glob=!viminfo
+
+# --- XDG User Base Configuration Dirs ---
+# Skip local package registration modules
+--glob=!.vim/plugged/
+# Exclude dynamic software layout asset tracking directories (e.g., .config/grip/cache-4.5.2/)
+--glob=!cache-[0-9.]*/
+# Skip static internal documentation manifests (e.g., .config/cheat/cheatsheets/)
+--glob=!cheatsheets/
+
+# --- IntelliJ/JetBrains IDE Project Metadata ---
+--glob=!*.{ipr,iml}
+--glob=!.idea/
+
+# --- Java/JVM Build System Output Matrices ---
+# Block lookups across automated gradle compiled build target paths
+#--glob=!build/
+# Skip raw log generation directories spawned by background application runtimes
+#--glob=!logs/

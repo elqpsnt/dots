@@ -1,0 +1,13 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                  🎨  GUI APPLICATIONS                        ║
+# ║       Visual macOS apps managed via Homebrew Casks           ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# Design & Prototyping
+cask "figma"
+
+# Terminal
+cask "cmux"
+
+# 🪟 AeroSpace ─ i3-like tiling window manager for macOS
+cask "nikitabobko/tap/aerospace"

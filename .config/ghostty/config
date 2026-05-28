@@ -1,0 +1,16 @@
+# ╔══════════════════════════════════════════════════════════════╗ 
+# ║                    ⚙️  Ghostty Options                       ║ 
+# ║      Global cmux / Ghostty styling and terminal settings     ║ 
+# ╚══════════════════════════════════════════════════════════════╝ 
+
+# ================================================================ 
+#  [ Window & Transparency Settings ] 
+# ================================================================ 
+background-opacity = 0.8     # Controls window transparency (0.0 = invisible, 1.0 = solid) 
+background-blur = 20         # Adds a macOS native blur behind transparent windows 
+unfocused-split-opacity = 0.7
+
+# ================================================================ 
+#  [ Theme & Color Settings ] 
+# ================================================================ 
+theme = dark:Rose Pine,light:Rose Pine Dawn

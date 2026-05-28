@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                    📊 GIT REPO STATS                         ║
+# ║   Unified dashboard analyzer for active Git repositories     ║
+# ║   Can be invoked natively using: $ git stats                ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+set -o errexit
+set -o nounset
+set -o pipefail
+[[ "${TRACE-0}" =~ ^1|t|y|true|yes$ ]] && set -o xtrace
+
+SCRIPT_NAME=${0##*/}
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Safety check: Ensure we are inside a Git tracking worktree before executing
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "❌ Error: Not a git repository (or any of the parent directories)" >&2
+  exit 1
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+
+IFS= read -rd '' USAGE <<EOF || :
+Print git repo stats
+Usage: git stats [-h]
+
+-h    Show this help text.
+EOF
+
+# =============================================================================
+#  [ UI Layout Helpers ]
+# =============================================================================
+
+divider() {
+  echo ""
+  echo "────────────────────────────────────────"
+}
+
+section() {
+  divider
+  echo "$1"
+  echo "────────────────────────────────────────"
+}
+
+# =============================================================================
+#  [ Dashboard Data Sections ]
+# =============================================================================
+
+header() {
+  section "📁 Repository"
+  echo "Repo: $(basename "$(git rev-parse --show-toplevel)")"
+}
+
+remotes() {
+  section "🌐 Remotes"
+  git remote -v | awk '{print "  • " $1 " → " $2}' | sort -u
+}
+
+sync_status() {
+  section "🔄 Remote Sync Status"
+
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true)
+
+  echo "Current branch: $branch"
+
+  if [[ -z "$upstream" ]]; then
+    echo "Upstream:       none"
+    return
+  fi
+
+  echo "Upstream:       $upstream"
+
+  # Silently fetch origin to verify delta status
+  git fetch -q origin 2>/dev/null || true
+
+  ahead=$(git rev-list --count "$upstream..HEAD")
+  behind=$(git rev-list --count "HEAD..$upstream")
+
+  echo "Ahead:          $ahead"
+  echo "Behind:         $behind"
+
+  if (( ahead == 0 && behind == 0 )); then
+    echo "Status:         🟢 up to date"
+  elif (( ahead > 0 && behind == 0 )); then
+    echo "Status:         🟡 ahead of upstream"
+  elif (( ahead == 0 && behind > 0 )); then
+    echo "Status:         🟠 behind upstream"
+  else
+    echo "Status:         🔴 diverged"
+  fi
+
+  last_remote_commit_time=$(git log -1 --format=%ct "$upstream" 2>/dev/null || echo 0)
+
+  if (( last_remote_commit_time > 0 )); then
+    now=$(date +%s)
+    age=$((now - last_remote_commit_time))
+
+    if (( age < 3600 )); then
+      human="less than 1 hour ago"
+    elif (( age < 86400 )); then
+      human="$((age / 3600)) hours ago"
+    elif (( age < 2592000 )); then
+      human="$((age / 86400)) days ago"
+    elif (( age < 31536000 )); then
+      human="$((age / 2592000)) months ago"
+    else
+      human="$((age / 31536000)) years ago"
+    fi
+
+    echo "Last Commit:    $human"
+  fi
+}
+
+repo_overview() {
+  section "📊 Repo Overview"
+
+  echo "Total Commits: $(git rev-list --count HEAD)"
+  echo "First Commit:  $(git log --reverse --format=%ad --date=short | head -1)"
+  echo "Last Commit:   $(git log -1 --format=%ad --date=short)"
+}
+
+repo_size() {
+  section "💾 Disk Footprint"
+
+  git_dir_size=$(du -sh .git 2>/dev/null | awk '{print $1}' || true)
+  worktree_size=$(du -sh . 2>/dev/null | awk '{print $1}' || true)
+
+  echo ".git metadata: $git_dir_size"
+  echo "Working tree:  $worktree_size"
+}
+
+files_and_churn() {
+  section "📈 Code Volume"
+
+  echo "Tracked Files: $(git ls-files | wc -l)"
+  echo "Lines Added:   $(git log --numstat --pretty=tformat: | awk '{a+=$1} END{print a}')"
+  echo "Lines Deleted: $(git log --numstat --pretty=tformat: | awk '{d+=$2} END{print d}')"
+}
+
+largest_files() {
+  section "📦 Largest Tracked Files"
+
+  local stat_flag
+  local stat_format
+  local file
+
+  # Check platform dependency for OS architecture differences (GNU vs BSD stat flags)
+  if stat --version >/dev/null 2>&1; then
+    stat_flag='-c'
+    stat_format='%s'
+  else
+    stat_flag='-f'
+    stat_format='%z'
+  fi
+
+  git ls-files -z |
+    while IFS= read -r -d '' file; do
+      [[ -e "$file" ]] || continue
+      printf '%s\t%s\n' "$(stat "$stat_flag" "$stat_format" "./$file" 2>/dev/null)" "$file"
+    done |
+    sort -t $'\t' -k1,1nr |
+    awk -F '\t' '
+      NR <= 5 {
+        printf "  %-50s %10.2f MB\n", $2, $1 / 1024 / 1024
+      }
+      END {
+        if (NR == 0) {
+          print "  No tracked files"
+        }
+      }'
+}
+
+working_tree() {
+  section "🧪 Local Working Tree State"
+
+  if git diff --quiet && git diff --cached --quiet; then
+    echo "🟢 Clean Workspace"
+  else
+    echo "🔴 Dirty Workspace (Uncommitted changes found)"
+    git status -s | head -10 | sed 's/^/  /'
+  fi
+}
+
+default_branch() {
+  section "🏷 Default Remote Target"
+
+  default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || true)
+
+  if [[ -n "$default_branch" ]]; then
+    echo "Default upstream target: origin/$default_branch"
+  else
+    echo "Default upstream target: unknown"
+  fi
+}
+
+branches() {
+  section "🌿 Branch Environment"
+
+  echo "Local Branches:"
+  git branch --format="  • %(refname:short)"
+
+  echo ""
+  echo "Remote Tracking Branches:"
+  git branch -r --format="  • %(refname:short)"
+}
+
+contributors() {
+  section "👥 Project Contribution Engine"
+
+  echo "Total Unique Authors: $(git shortlog -sn | wc -l)"
+  echo ""
+  echo "Top Contributor Rankings:"
+  git shortlog -sn | head -5
+}
+
+author_graph() {
+  section "📊 Commit Distribution Chart"
+
+  git shortlog -sn --no-merges | awk '
+  {
+    count=$1
+    name=substr($0,index($0,$2))
+    printf "  %-20s %4d ", name, count
+    for(i=0;i<count;i++) printf "█"
+    print ""
+  }'
+}
+
+# =============================================================================
+#  [ Command Line Flags ]
+# =============================================================================
+
+while getopts ":h?" opt; do
+  case "$opt" in
+    h|?) echo "$USAGE"; exit 0 ;;
+  esac
+done
+
+# =============================================================================
+#  [ Runtime Execution Sequence ]
+# =============================================================================
+
+header
+remotes
+sync_status
+repo_overview
+repo_size
+files_and_churn
+largest_files
+working_tree
+default_branch
+branches
+contributors
+author_graph
