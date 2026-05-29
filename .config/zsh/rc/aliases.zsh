@@ -128,3 +128,4 @@ clip() {
     pbcopy
   fi
 }
+alias lg='lazygit'
