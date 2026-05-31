@@ -41,3 +41,6 @@ brew "yazi"
 
 # Smarter cd command that learns your habits (z extension)
 brew "zoxide"
+
+# Mac App Store command-line interface
+brew "mas"
